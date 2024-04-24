@@ -5,13 +5,24 @@ import type { GeneralResponse } from './providers/types'
 
 const app = new Hono()
 
+const transformTrunk = (
+  trunk: string,
+  transformer: <T>(response: T) => GeneralResponse,
+): string => {
+  const lines = trunk.split('\n')
+  const lastLine = lines[lines.length - 1]
+  const data = lastLine.slice('data:'.length).trim()
+  const transformedValue = transformer(JSON.parse(data))
+  return `data: ${JSON.stringify(transformedValue)}\n\n`
+}
+
 async function makeReadableStream(
   url: string,
   request: RequestInit,
   stream: boolean,
   responseTransformer?: <T>(response: T) => GeneralResponse,
 ): Promise<ReadableStream> {
-  console.log('Making stream', stream, responseTransformer)
+  console.log('Making stream', url, request, responseTransformer)
   const decoder = new TextDecoder('utf-8')
   const encoder = new TextEncoder()
   let result = ''
@@ -27,8 +38,15 @@ async function makeReadableStream(
           const { done, value } = await reader.read()
           if (done) {
             if (stream && responseTransformer !== undefined) {
-              const doneData = 'data: [DONE]\n\n'
-              controller.enqueue(encoder.encode(doneData))
+              const trunks = result.trim().split(/\n\n/)
+              for (const trunk of trunks) {
+                controller.enqueue(
+                  encoder.encode(
+                    transformTrunk(trunk.trim(), responseTransformer),
+                  ),
+                )
+              }
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'))
             }
             controller.close()
             return
@@ -49,6 +67,7 @@ async function makeReadableStream(
                 encoder.encode(JSON.stringify(transformedValue)),
               )
             } catch (e) {
+              console.error(e)
               controller.enqueue(value)
             }
             return pump()
@@ -56,20 +75,19 @@ async function makeReadableStream(
 
           result += decodedValue
           const index = result.indexOf('\n\n')
+          console.log(result, index)
           if (index === -1) {
             return pump()
           }
           const trunk = result.slice(0, index)
-          const lines = trunk.split('\n')
-          const lastLine = lines[lines.length - 1]
-          const data = lastLine.slice('data:'.length).trim()
           try {
-            const transformedValue = responseTransformer(JSON.parse(data))
             controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify(transformedValue)}\n\n`),
+              encoder.encode(transformTrunk(trunk, responseTransformer)),
             )
-          } catch (e) {}
-          result = result.slice(index + 2)
+            result = result.slice(index + 2)
+          } catch (e) {
+            console.error(e)
+          }
           return pump()
         }
       },
@@ -112,6 +130,7 @@ app.post('/v1/chat/completions', async (c) => {
       provider.pathBuilder?.chat(
         model,
         authorization.slice('Bearer '.length),
+        Boolean(_body.stream),
       ) ?? '/chat/completions'
     }`,
     request,

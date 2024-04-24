@@ -3,6 +3,7 @@ import type { AIProvider } from './types'
 import anyscale from './anyscale'
 import baichuan from './baichuan'
 import dashscope from './dashscope'
+import gemini from './gemini'
 import groq from './groq'
 import minimax from './minimax'
 import moonshot from './moonshot'
@@ -20,6 +21,7 @@ const providers: Record<string, AIProvider> = {
   dashscope,
   perplexity,
   anyscale,
+  gemini,
 }
 
 export default providers

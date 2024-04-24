@@ -1,7 +1,7 @@
 export interface AIProvider {
   baseUrl: string
   pathBuilder?: {
-    completion: (model: string, accessKey: string) => string
+    chat: (model: string, accessKey: string, stream?: boolean) => string
   }
   transformers?: {
     header?: (
