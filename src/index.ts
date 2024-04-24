@@ -21,8 +21,9 @@ async function makeReadableStream(
   request: RequestInit,
   stream: boolean,
   responseTransformer?: <T>(response: T) => GeneralResponse,
+  delimiter = '\n\n',
 ): Promise<ReadableStream> {
-  console.log('Making stream', url, request, responseTransformer)
+  // console.log('Making stream', url, request, responseTransformer)
   const decoder = new TextDecoder('utf-8')
   const encoder = new TextEncoder()
   let result = ''
@@ -38,14 +39,6 @@ async function makeReadableStream(
           const { done, value } = await reader.read()
           if (done) {
             if (stream && responseTransformer !== undefined) {
-              const trunks = result.trim().split(/\n\n/)
-              for (const trunk of trunks) {
-                controller.enqueue(
-                  encoder.encode(
-                    transformTrunk(trunk.trim(), responseTransformer),
-                  ),
-                )
-              }
               controller.enqueue(encoder.encode('data: [DONE]\n\n'))
             }
             controller.close()
@@ -74,8 +67,7 @@ async function makeReadableStream(
           }
 
           result += decodedValue
-          const index = result.indexOf('\n\n')
-          console.log(result, index)
+          const index = result.indexOf(delimiter)
           if (index === -1) {
             return pump()
           }
@@ -84,7 +76,7 @@ async function makeReadableStream(
             controller.enqueue(
               encoder.encode(transformTrunk(trunk, responseTransformer)),
             )
-            result = result.slice(index + 2)
+            result = result.slice(index + delimiter.length)
           } catch (e) {
             console.error(e)
           }
@@ -140,6 +132,7 @@ app.post('/v1/chat/completions', async (c) => {
       model,
       _body.stream ? 'chat.completion.chunk' : 'chat.completion',
     ),
+    provider.streamDelimiter,
   )
 
   return stream(c, async (stream) => {

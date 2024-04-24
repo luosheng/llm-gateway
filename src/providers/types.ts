@@ -1,5 +1,6 @@
 export interface AIProvider {
   baseUrl: string
+  streamDelimiter?: string
   pathBuilder?: {
     chat: (model: string, accessKey: string, stream?: boolean) => string
   }

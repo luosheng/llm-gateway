@@ -26,6 +26,7 @@ interface GeminiResponseBody {
 
 const provider: AIProvider = {
   baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+  streamDelimiter: '\r\n\r\n',
   pathBuilder: {
     chat: (model: string, accessKey: string, stream?: boolean) =>
       `/models/${model}:${
@@ -51,8 +52,7 @@ const provider: AIProvider = {
     },
     response: <T>(model: string, mode: ChatMode, data: T): GeneralResponse => {
       const response = data as GeminiResponseBody
-      console.log(response)
-      const result = {
+      return {
         id: model,
         object: mode,
         model: model,
@@ -64,8 +64,6 @@ const provider: AIProvider = {
           },
         })),
       }
-      console.log(result)
-      return result
     },
   },
 }
