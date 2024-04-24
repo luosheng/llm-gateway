@@ -1,5 +1,6 @@
 import type { AIProvider } from './types'
 
+import anyscale from './anyscale'
 import baichuan from './baichuan'
 import dashscope from './dashscope'
 import groq from './groq'
@@ -18,6 +19,7 @@ const providers: Record<string, AIProvider> = {
   baichuan,
   dashscope,
   perplexity,
+  anyscale,
 }
 
 export default providers
