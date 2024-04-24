@@ -1,9 +1,9 @@
 import baichuan from './baichuan'
+import dashscope from './dashscope'
 import groq from './groq'
 import minimax from './minimax'
 import moonshot from './moonshot'
 import openai from './openai'
-import qwen from './qwen'
 import type { AIProvider } from './types'
 import yi from './yi'
 
@@ -14,7 +14,7 @@ const providers: Record<string, AIProvider> = {
   minimax,
   yi,
   baichuan,
-  qwen,
+  dashscope,
 }
 
 export default providers
