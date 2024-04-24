@@ -1,6 +1,8 @@
 export interface AIProvider {
   baseUrl: string
-  chatCompletionPath?: string
+  pathBuilder?: {
+    completion: (model: string, accessKey: string) => string
+  }
   transformers?: {
     header?: (
       headers: Record<string, string>,

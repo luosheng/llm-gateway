@@ -83,11 +83,11 @@ app.get('/', (c) => {
 
 app.post('/v1/chat/completions', async (c) => {
   const _body = await c.req.json()
-  const [model, serviceInBody, authorizationInBody] = _body.model.split(':')
+  const [model, serviceInBody, accessKey] = _body.model.split(':')
   const service = serviceInBody ?? c.req.query('service') ?? 'openai'
   const provider = providers[service]
-  const authorization = authorizationInBody
-    ? `Bearer ${authorizationInBody}`
+  const authorization = accessKey
+    ? `Bearer ${accessKey}`
     : c.req.header('Authorization')
   if (!authorization || !provider) {
     return c.notFound()
@@ -108,7 +108,12 @@ app.post('/v1/chat/completions', async (c) => {
   }
 
   const requestStream = await makeReadableStream(
-    `${provider.baseUrl}${provider.chatCompletionPath ?? '/chat/completions'}`,
+    `${provider.baseUrl}${
+      provider.pathBuilder?.chat(
+        model,
+        authorization.slice('Bearer '.length),
+      ) ?? '/chat/completions'
+    }`,
     request,
     Boolean(_body.stream),
     provider.transformers?.response?.bind(

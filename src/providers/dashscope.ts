@@ -37,7 +37,9 @@ interface QwenResponse {
 
 const provider: AIProvider = {
   baseUrl: 'https://dashscope.aliyuncs.com/api/v1',
-  chatCompletionPath: '/services/aigc/text-generation/generation',
+  pathBuilder: {
+    chat: () => '/services/aigc/text-generation/generation',
+  },
   transformers: {
     header: (header: Record<string, string>, body) => {
       if (body.stream === true) {
